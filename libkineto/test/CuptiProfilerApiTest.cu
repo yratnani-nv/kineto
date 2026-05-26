@@ -14,6 +14,7 @@
 
 // TODO(T90238193)
 // @lint-ignore-every CLANGTIDY facebook-hte-RelativeInclude
+#include "src/CuptiCallbackApi.h"
 #include "src/CuptiRangeProfilerApi.h"
 #include "src/Logger.h"
 
@@ -301,6 +302,9 @@ int main(int argc, char* argv[]) {
   DRIVER_API_CALL(cuInit(0));
   DRIVER_API_CALL(cuDeviceGetCount(&deviceCount));
 
+  // Standalone test bypasses libkineto_init(); register the CUPTI subscriber.
+  CuptiCallbackApi::singleton().initCallbackApi();
+
   if (deviceCount == 0) {
     LOG(ERROR) << "There is no device supporting CUDA.";
     return -2;
@@ -342,7 +346,13 @@ int main(int argc, char* argv[]) {
   };
 
   CUcontext cuContext;
+  // CUDA 13.x added a CUctxCreateParams* 2nd argument; older toolkits use
+  // the 3-argument form.
+#if defined(CUDA_VERSION) && CUDA_VERSION >= 13000
+  DRIVER_API_CALL(cuCtxCreate(&cuContext, nullptr, 0, cuDevice));
+#else
   DRIVER_API_CALL(cuCtxCreate(&cuContext, 0, cuDevice));
+#endif
 
   VectorAddSubtract();
 

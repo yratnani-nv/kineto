@@ -93,8 +93,24 @@ if(KINETO_BACKEND STREQUAL "cuda")
       "or set KINETO_BACKEND=cpu.")
   endif()
   message(STATUS "Found CUPTI")
+  set(LIBKINETO_HAVE_NVPERF FALSE)
+  set(LIBKINETO_NVPERF_LINK)
   if(TARGET CUDA::nvperf_host)
+    set(LIBKINETO_HAVE_NVPERF TRUE)
+    set(LIBKINETO_NVPERF_LINK CUDA::nvperf_host)
     message(STATUS "Found NVPERF")
+  else()
+    find_library(LIBKINETO_NVPERF_HOST_LIB
+      NAMES nvperf_host
+      HINTS ${CUDAToolkit_LIBRARY_DIR}
+            ${CUDAToolkit_TARGET_DIR}/lib
+            ${CUDAToolkit_TARGET_DIR}/lib64
+    )
+    if(LIBKINETO_NVPERF_HOST_LIB)
+      set(LIBKINETO_HAVE_NVPERF TRUE)
+      set(LIBKINETO_NVPERF_LINK ${LIBKINETO_NVPERF_HOST_LIB})
+      message(STATUS "Found NVPERF: ${LIBKINETO_NVPERF_HOST_LIB}")
+    endif()
   endif()
 elseif(KINETO_BACKEND STREQUAL "rocm")
   # ROCm prerequisites and version detection
@@ -195,7 +211,7 @@ endif()
 if(KINETO_BACKEND STREQUAL "cuda")
   list(APPEND KINETO_DEFINITIONS "HAS_CUPTI")
   # Disable CUPTI range profiler on Windows temporarily. Should fix in future
-  if(TARGET CUDA::nvperf_host AND NOT WIN32)
+  if(LIBKINETO_HAVE_NVPERF AND NOT WIN32)
     list(APPEND KINETO_DEFINITIONS "USE_CUPTI_RANGE_PROFILER")
   endif()
 elseif(KINETO_BACKEND STREQUAL "rocm")
@@ -296,8 +312,9 @@ target_include_directories(kineto PUBLIC
 if(KINETO_BACKEND STREQUAL "cuda")
   target_link_libraries(kineto PUBLIC CUDA::cupti CUDA::cudart)
   target_link_libraries(kineto_base PUBLIC CUDA::cupti CUDA::cudart)
-  if(TARGET CUDA::nvperf_host)
-    target_link_libraries(kineto_base PUBLIC CUDA::nvperf_host)
+  if(LIBKINETO_HAVE_NVPERF)
+    target_link_libraries(kineto PUBLIC ${LIBKINETO_NVPERF_LINK})
+    target_link_libraries(kineto_base PUBLIC ${LIBKINETO_NVPERF_LINK})
   endif()
 elseif(KINETO_BACKEND STREQUAL "rocm")
   target_include_directories(kineto_base SYSTEM PUBLIC
