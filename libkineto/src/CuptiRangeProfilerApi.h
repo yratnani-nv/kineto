@@ -12,14 +12,10 @@
 #include <cuda_runtime_api.h>
 // Using CUDA 11 and above due to usage of API:
 // cuptiProfilerGetCounterAvailability.
-// Starting from CUDA 12.06 the Profiler API is superseded by Range Profiler API
-// This needs significant rework. See
-// https://docs.nvidia.com/cupti/main/main.html#evolution-of-the-profiling-apis
 #if defined(USE_CUPTI_RANGE_PROFILER) && defined(CUDART_VERSION) && CUDART_VERSION >= 10000 && \
-    CUDA_VERSION >= 11000 && CUDA_VERSION <= 12060
+    CUDA_VERSION >= 11000
 #define HAS_CUPTI_RANGE_PROFILER 1
-#endif // CUDART_VERSION > 10.00 and CUDA_VERSION >= 11.00 and CUDA_VERSION
-       // <= 12.06
+#endif // CUDART_VERSION > 10.00 and CUDA_VERSION >= 11.00
 
 #if HAS_CUPTI_RANGE_PROFILER
 #include <cupti.h>
