@@ -134,12 +134,13 @@ target_link_libraries(PidInfoTest PRIVATE
     ${XPU_XPUPTI_LIBRARY})
 gtest_discover_tests(PidInfoTest)
 
+if(KINETO_BACKEND STREQUAL "cuda")
 # CuptiProfilerApiTest
-# TODO: Re-enable once runtime crash in cuptiDeviceGetChipName is fixed.
-# enable_language(CUDA)
-# add_executable(CuptiProfilerApiTest CuptiProfilerApiTest.cu)
-# target_link_libraries(CuptiProfilerApiTest PRIVATE
-#     kineto_base kineto_api
-#     CUDA::cuda_driver
-#     gtest_main)
-# add_test(NAME CuptiProfilerApiTest COMMAND CuptiProfilerApiTest)
+enable_language(CUDA)
+add_executable(CuptiProfilerApiTest CuptiProfilerApiTest.cu)
+target_link_libraries(CuptiProfilerApiTest PRIVATE
+    kineto_base kineto_api
+    CUDA::cuda_driver
+    gtest_main)
+add_test(NAME CuptiProfilerApiTest COMMAND CuptiProfilerApiTest)
+endif()
